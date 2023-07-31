@@ -1,29 +1,37 @@
 const fs = require('fs');
 const express = require('express');
+const morgan = require('morgan');
 
 const app = express();
-app.use(express.json());
 const portNum = 3000;
+app.use(express.json());
+app.use(morgan('dev'));
 const toursJson = fs.readFileSync(
   `${__dirname}/dev-data/data/tours-simple.json`
 );
 const tours = JSON.parse(toursJson);
 
+app.use((req, res, next) => {
+  req.requestTime = new Date().toISOString();
+  next();
+});
+
 app.get('/', (request, response) => {
   response.status(200).send('hello!!!');
 });
 
-app.get('/tours', (req, res) => {
+const getAllTours = (req, res) => {
   res.status(200).json({
     status: 'success',
+    requestedAt: req.requestTime,
     results: tours.length,
     data: {
       tours: { tours },
     },
   });
-});
+};
 
-app.get('/tours/:id', (req, res) => {
+const getTour = (req, res) => {
   console.log(req.params);
   const id = req.params.id * 1;
   if (id >= tours.length)
@@ -31,15 +39,14 @@ app.get('/tours/:id', (req, res) => {
       status: 'fail',
       message: 'Invalid Id',
     });
-
   const tour = tours[id];
   res.status(200).json({
     status: 'success',
     data: { tour },
   });
-});
+};
 
-app.post('/tours', (req, res) => {
+const addTour = (req, res) => {
   // console.log(req.body);
   const newObj = Object.assign({ id: tours.length }, req.body);
   tours.push(newObj);
@@ -53,9 +60,9 @@ app.post('/tours', (req, res) => {
       });
     }
   );
-});
+};
 
-app.patch('/tours/:id', (req, res) => {
+const updateTour = (req, res) => {
   if (req.params.id * 1 > tours.length)
     return res.status(404).json({
       status: 'fail',
@@ -67,17 +74,58 @@ app.patch('/tours/:id', (req, res) => {
       tour: '<Updated tour>',
     },
   });
-});
+};
 
-app.delete('/tours/:id', (req, res) => {
+const deleteTour = (req, res) => {
   if (req.params.id * 1 > tours.length)
     return res.status(404).json({
       status: 'fail',
       message: 'Invalid ID',
     });
   res.status(204).send();
-});
+};
 
+const getAllUsers = (req, res) => {
+  res.status(500).json({
+    status: 'error',
+    message: 'this route is not yet completed',
+  });
+};
+const getUser = (req, res) => {
+  res.status(500).json({
+    status: 'error',
+    message: 'this route is not yet completed',
+  });
+};
+const addUser = (req, res) => {
+  res.status(500).json({
+    status: 'error',
+    message: 'this route is not yet completed',
+  });
+};
+const deleteUser = (req, res) => {
+  res.status(500).json({
+    status: 'error',
+    message: 'this route is not yet completed',
+  });
+};
+const updateUser = (req, res) => {
+  res.status(500).json({
+    status: 'error',
+    message: 'this route is not yet completed',
+  });
+};
+
+// app.get('/tours', getAllTours);
+// app.get('/tours/:id', getTour);
+// app.post('/tours', addTour);
+// app.patch('/tours/:id', updateTour);
+// app.delete('/tours/:id', deleteTour);
+
+app.route('/tours').get(getAllTours).post(addTour);
+app.route('/tours/:id').get(getTour).patch(updateTour).delete(deleteTour);
+app.route('/users').get(getAllUsers).post(addUser);
+app.route('/users/:id').get(getUser).patch(updateUser).delete(deleteUser);
 app.listen(portNum, () => {
   console.log('listing...');
 });
